@@ -36,6 +36,19 @@ subset = df[df["task"] == task].copy()
 st.metric("Sampled channels", len(subset))
 st.metric("Positive loss changes", int((subset["importance"] > 0).sum()))
 
+if "group" in df.columns and "stage" in df.columns:
+    comparison = df[df["stage"] == "layer1_test"].copy()
+    if not comparison.empty:
+        st.subheader("Layer 1: linked versus random")
+        summary = comparison.groupby("group")["importance"].agg(["mean", "median", "count"])
+        st.dataframe(summary, use_container_width=True)
+        fig_compare = px.box(comparison, x="group", y="importance", points="all",
+                             labels={"importance": "Δ loss", "group": "Selection group"},
+                             title="Layer 1 ablation loss by selection group")
+        fig_compare.add_hline(y=0, line_dash="dash", line_color="gray")
+        st.plotly_chart(fig_compare, use_container_width=True)
+        st.caption("Exploratory comparison only: the same five coding examples were used for channel selection and evaluation.")
+
 st.subheader("Channel map by transformer layer")
 st.caption("Only sampled channels appear. Their horizontal positions are true channel indices; empty space is unmeasured, not zero.")
 fig = px.scatter(
